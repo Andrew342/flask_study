@@ -6,21 +6,53 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_script import Manager,Shell
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate,MigrateCommand
+from flask_mail import Mail, Message
+import os
+from threading import Thread
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard to guess string'
 app.config['SQLALCHEMY_DATABASE_URI']="mysql+pymysql://root:password@localhost:3306/data"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=True
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN']=True
+app.config['MAIL_SERVER'] = 'smtp.163.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = ''
+app.config['FLASKY_MAIL_SENDER'] = 'momo3wenyu@163.com'
+app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')
+
 
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db=SQLAlchemy(app)
 manager=Manager(app)
+migrate=Migrate(app,db)
+manager.add_command('db',MigrateCommand)
+mail = Mail(app)
 
 class NameForm(FlaskForm):
     name = StringField('What is your name?', validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+        # print('Mail sent')
+
+
+def send_email(to, subject, template, **kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + ' ' + subject,
+                  sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+    return thr
 
 
 @app.errorhandler(404)
@@ -43,6 +75,10 @@ def index():
             db.session.add(user)
             db.session.commit()
             session['known'] = False
+            # print(app.config['FLASKY_ADMIN'])
+            if app.config['FLASKY_ADMIN']:
+                send_email(app.config['FLASKY_ADMIN'], 'New User',
+                           'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data
@@ -69,6 +105,7 @@ class User(db.Model):
         return '<Role %r>' % self.username
 
 
+@app.shell_context_processor
 def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 manager.add_command("shell", Shell(make_context=make_shell_context))
