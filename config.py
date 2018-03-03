@@ -4,14 +4,18 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.163.com')
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.qq.com')
+    # MAIL_SERVER="smtp.qq.com"
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '465'))
+    # MAIL_PORT=465
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'true').lower() in \
         ['true', 'on', '1']
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    # MAIL_USERNAME = '635771687@qq.com'
+    # MAIL_PASSWORD = 'fuysxgnvhsgmbdab'
     FLASKY_MAIL_SUBJECT_PREFIX = ''
-    FLASKY_MAIL_SENDER = 'momo3wenyu@163.com'
+    FLASKY_MAIL_SENDER = '635771687@qq.com'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_COMMIT_ON_TEARDOWN=True
