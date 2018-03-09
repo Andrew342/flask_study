@@ -11,6 +11,7 @@ CREATE TABLE roles(
     PRIMARY KEY (id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 AUTO_INCREMENT=1;
+
 CREATE TABLE users(
     id INT(11) NOT NULL AUTO_INCREMENT,
     username VARCHAR(255) COLLATE utf8_bin NOT NULL,
@@ -27,13 +28,17 @@ CREATE TABLE users(
     member_since datetime DEFAULT CURRENT_TIMESTAMP,
     last_seen datetime DEFAULT CURRENT_TIMESTAMP,
     avatar_hash VARCHAR(255),
+    followed INT(11),
+    followers INT(11),
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 AUTO_INCREMENT=1;
+
 CREATE TABLE posts(
     id INT(11) NOT NULL AUTO_INCREMENT,
     body TEXT,
+    body_html TEXT,
     timestamp datetime DEFAULT CURRENT_TIMESTAMP,
     INDEX(timestamp),
     author_id INT(11),
@@ -41,3 +46,12 @@ CREATE TABLE posts(
     PRIMARY KEY (id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 AUTO_INCREMENT=1;
+
+CREATE TABLE follows(
+    follower_id INT(11),
+    constraint con_follower FOREIGN KEY (follower_id) REFERENCES users(id),
+    followed_id INT(11),
+    constraint con_followed FOREIGN KEY (followed_id) REFERENCES users(id),
+    PRIMARY KEY (follower_id,followed_id),
+    timestamp datetime DEFAULT CURRENT_TIMESTAMP
+)ENGINE=INNODB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
